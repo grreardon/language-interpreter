@@ -1,0 +1,60 @@
+<program> := <stmt_list>
+<stmt_list> := <stmt> <stmt_list> | ε
+
+<stmt> := <if> | <while> | <for> | <func>
+| <let> ';' | <assign> ';' | <postfix> ';'
+| <return> | <break> | <continue>
+
+<block> := '{' <stmt_list> '}'
+
+<if> := 'if' '(' <expr> ')' <block> <else>
+<else> := 'else' <if> | 'else' <block> | ε
+
+<let> := 'let' <id> '=' <expr>
+<assign> := <lvalue> <assign_op> <expr>
+<lvalue> := <id> | <postfix> '['<expr>']' | <postfix> '.' <id>
+<postfix> := <postfix> '[' <expr> ']'
+| <postfix> '(' <args> ')'
+| <postfix> '.' <id>
+| <primary>
+<assign_op> := '=' | '+=' | '-=' | '*=' | '/=' | '%='
+
+<while> := 'while' '(' <expr> ')' <block>
+<for> := 'for' '(' <for_init> ';' <for_cond> ';' <for_update> ')' <block>
+<for_init> := <let> | <assign> | ε
+<for_cond> := <expr> | ε
+<for_update> := <assign> | <postfix> | ε
+
+<func> := 'func' <id> '(' <params> ')' <block>
+<params> := <param_list> | ε
+<param_list> := <param_list> ',' <id> | <id>
+
+<return> := 'return' <expr> ';' | 'return' ';'
+<break> := 'break' ';'
+<continue> := 'continue' ';'
+
+<args> := <arg_list> | ε
+<arg_list> := <arg_list> ',' <expr> | <expr>
+
+<expr> := <or>
+<or> := <or> '||' <and> | <and>
+<and> := <and> '&&' <cmp> | <cmp>
+<cmp> := <bit_or> <cmp_op> <bit_or> | <bit_or>
+<cmp_op> := '==' | '!=' | '<' | '<=' | '>' | '>='
+<bit_or> := <bit_or> '|' <bit_xor> | <bit_xor>
+<bit_xor> := <bit_xor> '^' <bit_and> | <bit_and>
+<bit_and> := <bit_and> '&' <shift> | <shift>
+<shift> := <shift> '<<' <additive> | <shift> '>>' <additive> | <additive>
+<additive> := <additive> '+' <multiplicative>
+| <additive> '-' <multiplicative>
+| <multiplicative>
+<multiplicative> := <multiplicative> '*' <unary>
+| <multiplicative> '/' <unary>
+| <multiplicative> '%' <unary>
+| <unary>
+<unary> := '-' <unary> | '!' <unary> | '~' <unary> | <power>
+<power> := <postfix> '**' <unary> | <postfix>
+<primary> := <id> | <literal> | '(' <expr> ')' | <array_lit>
+<array_lit>      := '[' <args> ']'
+<id> := IDENTIFIER
+<literal> := NUMBER | CHAR | STRING | BOOLEAN
