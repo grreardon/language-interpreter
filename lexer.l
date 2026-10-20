@@ -34,7 +34,7 @@ char *unescape(const char *s, int len);
 "<<" { return SL; }
 ">>" { return SR; }
 "**" { return POW; }
-[(){}[\]=.;,<>!\|^\&\+\*%/~-] { return yytext[0]; }
+[(){}\[\]=.;,<>!|^&+*%/~\-] { return yytext[0]; }
 \'([^'\\\n]|\\.)\'   { char *s = unescape(yytext + 1, yyleng - 2); yylval.ch = s[0]; free(s); return CHAR; }
 \"([^"\\\n]|\\.)*\"  { yylval.str = unescape(yytext + 1, yyleng - 2); return STRING; }
 [0-9]+(\.[0-9]+)?    { yylval.num = atof(yytext); return NUMBER; }
@@ -59,6 +59,10 @@ char *unescape(const char *s, int len) {
                 case '"':  out[j++] = '"';  break;
                 case '\'': out[j++] = '\''; break;
                 case '0':  out[j++] = '\0'; break;
+                case 'r': out[j++] = '\r'; break;
+                case 'b': out[j++] = '\b'; break;
+                case 'f': out[j++] = '\f'; break;
+                case 'v': out[j++] = '\v'; break;
                 default:   out[j++] = s[i]; break;
             }
         } else {
