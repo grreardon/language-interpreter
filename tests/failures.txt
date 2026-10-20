@@ -1,0 +1,14 @@
+let x = ;  -> unexpected ';'
+let = 5; -> unexpected '=' expecting IDENTIFIER
+let x = 5 -> unexpected end of file, expecting ';'
+x += ; -> unexpected ';'
+if (true) x = 1; -> unexpected IDENTIFIER, expecting '{'
+while () {} -> unexpected ')'
+for (let i = 0 i < 10; i += 1) {} -> unexpected IDENTIFIER, expecting ';'
+func f(a,) {} -> unexpected ')', expecting IDENTIFIER
+func f( {} -> unexpected '{', expecting ')'
+let x = [1, 2,]; -> unexpected ']'
+return 5 -> expecting ';'
+let x = "hello; -> unterminated str
+let x = 2 + * 3; -> unexpected '*'
+

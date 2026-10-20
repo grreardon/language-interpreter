@@ -23,7 +23,7 @@ extern int yylineno;
    stmt_list
    : stmt stmt_list | %empty;
    stmt
-   : if | while | for | func | let ';' | assign ';' | postfix ';' | return | break | continue;
+   : if | while | for | func | let ';' | assign ';' | expr ';' | return | break | continue;
    block
    : '{' stmt_list '}';
    if

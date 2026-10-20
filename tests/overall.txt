@@ -1,0 +1,89 @@
+
+let x = 10;
+let y = 3.5;
+let z = true;
+let c = 'a';
+let s = "hello\nworld";
+
+x = 20;
+x += 5;
+x -= 2;
+x *= 3;
+x /= 2;
+x %= 4;
+
+let arithmetic = 2 + 3 * 4 - 5 / 2;
+let powers = 2 ** 3 ** 2;
+let negative = -2 ** 2;
+let grouped = (-2) ** 2;
+
+let logic = true && false || !false;
+let comparisons = x >= 10 && y != 0;
+let bits = (5 & 3) | (8 ^ 2);
+let shifted = 8 << 2 >> 1;
+
+let arr = [1, 2, 3];
+let empty = [];
+let nested = [[1, 2], [3, 4]];
+
+arr[0] = 10;
+arr[1] += 5;
+arr[0];
+
+func add(a, b) {
+    return a + b;
+}
+
+func greet() {
+    return "hello";
+}
+
+func factorial(n) {
+    if (n <= 1) {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
+
+let result = add(3, 4);
+let factorial_result = factorial(5);
+
+if (x > 0) {
+    x = x + 1;
+} else if (x == 0) {
+    x = 1;
+} else {
+    x = -1;
+}
+
+while (x < 100) {
+    x += 1;
+    if (x == 50) {
+        continue;
+    }
+    if (x == 90) {
+        break;
+    }
+}
+
+for (let i = 0; i < 10; i += 1) {
+    arr[0] += i;
+}
+
+for (;;) {
+    break;
+}
+
+func outer(a) {
+    func inner(b) {
+        return a + b;
+    }
+    return inner(5);
+}
+
+let obj = foo.bar;
+foo.bar = 10;
+foo.bar.baz += 2;
+foo.bar(1, 2);
+foo[0](3);
