@@ -1,13 +1,24 @@
+%code requires
+{
+   #include <string>
+   #include <vector>
+   class Expr;
+   class Stmt;
+   class BlockStmt;
+}
+
 %{
 #include <stdio.h>
 #include <math.h>
+#include "./AST/Expr/Expr.hpp"
+#include "./AST/Stmt/Stmt.hpp"
 int yylex(void);
 void yyerror(const char *s);
 extern int yylineno;
 %}
 
 %define parse.error detailed
-%union { double num; char *str; char ch; int boolean; }
+%union { double num; char* str; char ch; int boolean; int op; Expr* expr; Stmt* stmt; BlockStmt* blockstmt; std::vector<Stmt*>* stmts; std::vector<std::string>* names; std::vector<Expr*>* exprs;}
 %token IF ELSE LET WHILE FOR FUNC RETURN BREAK CONTINUE
 %token PLUSEQUAL MINUSEQUAL MULTEQUAL DIVEQUAL MODEQUAL
 %token OR AND EQ NEQ LEQ GEQ SL SR POW
@@ -15,6 +26,19 @@ extern int yylineno;
 %token <str> STRING IDENTIFIER
 %token <ch> CHAR
 %token <boolean> BOOLEAN
+%type <expr> expr or and cmp bit_or bit_xor bit_and shift additive multiplicative unary power
+%type <expr> postfix primary literal array_lit lvalue for_cond
+%type <stmt> stmt if else while for func let assign return break continue for_init for_update
+%type <blockstmt> block
+%type <stmts> stmt_list
+%type <op> assign_op cmp_op
+%type <names> params param_list
+%type <exprs> args arg_list
+%type <str> id
+
+
+
+//program, stmt_list, assign_op, params,
 
 %%
 
