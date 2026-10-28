@@ -73,7 +73,12 @@ extern int yylineno;
    | postfix '.' id { $$ = new MemberExpr(std::unique_ptr<Expr>($1), std::string($3)); free($3);}
    | primary;
    assign_op
-   : '=' | PLUSEQUAL | MINUSEQUAL| MULTEQUAL | DIVEQUAL | MODEQUAL;
+   : '=' { $$ = '='; }
+   | PLUSEQUAL { $$ = PLUSEQUAL; }
+   | MINUSEQUAL { $$ = MINUSEQUAL; }
+   | MULTEQUAL { $$ = MULTEQUAL; }
+   | DIVEQUAL { $$ = DIVEQUAL; }
+   | MODEQUAL { $$ = MODEQUAL; };
    while
    : WHILE '(' expr ')' block;
    for
@@ -104,29 +109,51 @@ extern int yylineno;
    expr
    : or;
    or
-   : or OR and | and;
+   : or OR and { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), OR, std::unique_ptr<Expr>($3)); }
+   | and;
    and
-   : and AND cmp | cmp;
+   : and AND cmp { $$ = new BinaryExpr(std::unique_ptr<Expr>($1),AND, std::unique_ptr<Expr>($3)); }
+   | cmp;
    cmp
-   : bit_or cmp_op bit_or | bit_or;
+   : bit_or cmp_op bit_or { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), $2, std::unique_ptr<Expr>($3)); }
+   | bit_or;
    cmp_op
-   : EQ | NEQ | '<' | LEQ | '>' | GEQ;
+   : EQ { $$ = EQ; }
+   | NEQ { $$ = NEQ; }
+   | '<' { $$ = '<'; }
+   | LEQ { $$ = LEQ; }
+   | '>' { $$ = '>'; }
+   | GEQ { $$ = GEQ; }
    bit_or
-   : bit_or '|' bit_xor | bit_xor;
+   : bit_or '|' bit_xor { $$ = new BinaryExpr(std::unique_ptr<Expr>($1),'|', std::unique_ptr<Expr>($3)); }
+   | bit_xor;
    bit_xor
-   : bit_xor '^' bit_and | bit_and;
+   : bit_xor '^' bit_and { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), '^', std::unique_ptr<Expr>($3)); }
+   | bit_and;
    bit_and
-   : bit_and '&' shift | shift;
+   : bit_and '&' shift  { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), '&', std::unique_ptr<Expr>($3)); }
+   | shift;
    shift
-   : shift SL additive | shift SR additive | additive;
+   : shift SL additive { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), SL, std::unique_ptr<Expr>($3)); }
+   | shift SR additive { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), SR, std::unique_ptr<Expr>($3)); }
+   | additive;
    additive
-   : additive '+' multiplicative | additive '-' multiplicative | multiplicative;
+   : additive '+' multiplicative { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), '+', std::unique_ptr<Expr>($3)); }
+   | additive '-' multiplicative  { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), '-', std::unique_ptr<Expr>($3)); }
+   | multiplicative;
    multiplicative
-   : multiplicative '*' unary | multiplicative '/' unary | multiplicative '%' unary | unary;
+   : multiplicative '*' unary { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), '*', std::unique_ptr<Expr>($3)); }
+   | multiplicative '/' unary { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), '/', std::unique_ptr<Expr>($3)); }
+   | multiplicative '%' unary { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), '%', std::unique_ptr<Expr>($3)); }
+   | unary;
    unary
-   : '-' unary | '!' unary | '~' unary | power;
+   : '-' unary { $$ = new UnaryExpr(std::unique_ptr<Expr>($2), '-');}
+      | '!' unary { $$ = new UnaryExpr(std::unique_ptr<Expr>($2), '!');}
+      | '~' unary { $$ = new UnaryExpr(std::unique_ptr<Expr>($2), '~');}
+      | power;
    power
-   : postfix POW unary | postfix;
+   : postfix POW unary { $$ = new BinaryExpr(std::unique_ptr<Expr>($1), POW, std::unique_ptr<Expr>($3)); }
+   | postfix;
    primary
    : id { $$ = new VariableExpr(std::string($1)); free($1);}
    | literal
