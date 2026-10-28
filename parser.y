@@ -48,19 +48,32 @@ extern int yylineno;
    : stmt_list stmt { $1->push_back($2); $$ = $1; }
    | %empty { $$ = new std::vector<Stmt*>(); };
    stmt
-   : if | while | for | func | let ';' | assign ';' | expr ';' | return | break | continue;
+   : if | while | for | func | let ';' | assign ';'
+   |  expr ';' {$$ = new ExprStmt(std::unique_ptr<Expr>($1)); }
+   | return | break | continue;
    block
-   : '{' stmt_list '}';
+   : '{' stmt_list '}' {
+      std::vector<std::unique_ptr<Stmt>> arguments;
+      for(Stmt* expr: *$2) {
+      arguments.push_back(std::unique_ptr<Stmt>(expr));
+      }
+      delete $2;
+      $$ = new BlockStmt(std::move(arguments));
+   };
    if
-   : IF '(' expr ')' block else;
+   : IF '(' expr ')' block else { $$ = new IfStmt(std::unique_ptr<Expr>($3), std::unique_ptr<BlockStmt>($5), std::unique_ptr<Stmt>($6)); };
    else
-   : ELSE if | ELSE block | %empty { $$ = nullptr; };
+   : ELSE if { $$ = $2; }
+   | ELSE block { $$ = $2; }
+   | %empty { $$ = nullptr; };
    let
-   : LET id '=' expr;
+   : LET id '=' expr { $$ = new LetStmt(std::string($2), std::unique_ptr<Expr>($4)); };
    assign
-   : lvalue assign_op expr;
+   : lvalue assign_op expr { $$ = new AssignmentStmt(std::unique_ptr<Expr>($1), $2, std::unique_ptr<Expr>($3)); };
    lvalue
-   : id | postfix '[' expr ']' | postfix '.' id;
+   : id { $$ = new VariableExpr(std::string($1)); }
+   | postfix '[' expr ']' { $$ = new IndexExpr(std::unique_ptr<Expr>($1), std::unique_ptr<Expr>($3)); }
+   | postfix '.' id { $$ = new MemberExpr(std::unique_ptr<Expr>($1), std::string($3)); };
    postfix
    : postfix '[' expr ']' { $$ = new IndexExpr(std::unique_ptr<Expr>($1), std::unique_ptr<Expr>($3));}
    | postfix '(' args ')' {
@@ -80,9 +93,9 @@ extern int yylineno;
    | DIVEQUAL { $$ = DIVEQUAL; }
    | MODEQUAL { $$ = MODEQUAL; };
    while
-   : WHILE '(' expr ')' block;
+   : WHILE '(' expr ')' block { $$ = new WhileStmt(std::unique_ptr<Expr>($3), std::unique_ptr<BlockStmt>($5)); };
    for
-   : FOR '(' for_init ';' for_cond ';' for_update ')' block;
+   : FOR '(' for_init ';' for_cond ';' for_update ')' block { $$ = new ForStmt(std::unique_ptr<Stmt>($3), std::unique_ptr<Expr>($5), std::unique_ptr<Stmt>($7), std::unique_ptr<BlockStmt>($9)); };
    for_init
    : let | assign | %empty { $$ = nullptr; };
    for_cond
@@ -90,17 +103,19 @@ extern int yylineno;
    for_update
    : assign | postfix | %empty { $$ = nullptr; };
    func
-   : FUNC id '(' params ')' block;
+   : FUNC id '(' params ')' block { $$ = new FunctionStmt($2, $4, std::unique_ptr<BlockStmt>($6)); };
    params
    : param_list | %empty { $$ = new std::vector<std::string>(); };
    param_list
-   : param_list ',' id | id;
+   : param_list ',' id { $1->push_back($3); $$ = $1; }
+   | id { $$ = new std::vector<string>(); $$->push_back($1); };
    return
-   : RETURN expr ';' | RETURN ';';
+   : RETURN expr ';' { $$ = new ReturnStmt(std::unique_ptr<Expr>($2)); }
+   | RETURN ';' { $$ = new ReturnStmt(nullptr); };
    break
-   : BREAK ';';
+   : BREAK ';' { $$ = new BreakStmt(); };
    continue
-   : CONTINUE ';';
+   : CONTINUE ';' { $$ = new ContinueStmt(); };
    args
    : arg_list | %empty { $$ = new std::vector<Expr*>(); };
    arg_list
@@ -123,7 +138,7 @@ extern int yylineno;
    | '<' { $$ = '<'; }
    | LEQ { $$ = LEQ; }
    | '>' { $$ = '>'; }
-   | GEQ { $$ = GEQ; }
+   | GEQ { $$ = GEQ; };
    bit_or
    : bit_or '|' bit_xor { $$ = new BinaryExpr(std::unique_ptr<Expr>($1),'|', std::unique_ptr<Expr>($3)); }
    | bit_xor;
@@ -169,7 +184,7 @@ extern int yylineno;
    $$ = new ArrayExpr(std::move(arguments));
    };
    id
-   : IDENTIFIER;
+   : IDENTIFIER { $$ = $1 };
    literal
    : NUMBER { $$ = new LiteralExpr($1);}
    | CHAR { $$ = new LiteralExpr($1);}
