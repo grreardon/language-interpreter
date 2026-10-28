@@ -47,7 +47,7 @@ char *unescape(const char *s, int len);
 %%
 
 char *unescape(const char *s, int len) {
-    char *out = malloc(len + 1);
+    char *out = (char *)malloc(len + 1);
     int j = 0;
     for (int i = 0; i < len; i++) {
         if (s[i] == '\\' && i + 1 < len) {
