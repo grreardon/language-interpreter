@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "./AST/Expr/Expr.hpp"
-#include "./AST/Stmt/Stmt.hpp"
+#include "./AST/Stmt/Statement.hpp"
 int yylex(void);
 void yyerror(const char *s);
 extern int yylineno;
@@ -45,7 +45,8 @@ extern int yylineno;
    program
    : stmt_list;
    stmt_list
-   : stmt stmt_list | %empty;
+   : stmt_list stmt { $1->push_back($2); $$ = $1; }
+   | %empty { $$ = new std::vector<Stmt*>(); };
    stmt
    : if | while | for | func | let ';' | assign ';' | expr ';' | return | break | continue;
    block
@@ -53,7 +54,7 @@ extern int yylineno;
    if
    : IF '(' expr ')' block else;
    else
-   : ELSE if | ELSE block | %empty;
+   : ELSE if | ELSE block | %empty { $$ = nullptr; };
    let
    : LET id '=' expr;
    assign
@@ -61,9 +62,15 @@ extern int yylineno;
    lvalue
    : id | postfix '[' expr ']' | postfix '.' id;
    postfix
-   : postfix '[' expr ']'
-   | postfix '(' args ')'
-   | postfix '.' id
+   : postfix '[' expr ']' { $$ = new IndexExpr(std::unique_ptr<Expr>($1), std::unique_ptr<Expr>($3));}
+   | postfix '(' args ')' {
+   std::vector<std::unique_ptr<Expr>> arguments;
+   for(Expr* expr : *$3) {
+   arguments.push_back(std::unique_ptr<Expr>(expr));
+   }
+   delete $3;
+   $$ = new CallExpr(std::unique_ptr<Expr>($1), std::move(arguments));}
+   | postfix '.' id { $$ = new MemberExpr(std::unique_ptr<Expr>($1), std::string($3)); free($3);}
    | primary;
    assign_op
    : '=' | PLUSEQUAL | MINUSEQUAL| MULTEQUAL | DIVEQUAL | MODEQUAL;
@@ -72,15 +79,15 @@ extern int yylineno;
    for
    : FOR '(' for_init ';' for_cond ';' for_update ')' block;
    for_init
-   : let | assign | %empty;
+   : let | assign | %empty { $$ = nullptr; };
    for_cond
-   : expr | %empty;
+   : expr | %empty { $$ = nullptr; };
    for_update
-   : assign | postfix | %empty;
+   : assign | postfix | %empty { $$ = nullptr; };
    func
    : FUNC id '(' params ')' block;
    params
-   : param_list | %empty;
+   : param_list | %empty { $$ = new std::vector<std::string>(); };
    param_list
    : param_list ',' id | id;
    return
@@ -90,9 +97,10 @@ extern int yylineno;
    continue
    : CONTINUE ';';
    args
-   : arg_list | %empty;
+   : arg_list | %empty { $$ = new std::vector<Expr*>(); };
    arg_list
-   : arg_list ',' expr | expr;
+   : arg_list ',' expr { $1->push_back($3); $$ = $1; }
+   | expr { $$ = new std::vector<Expr*>(); $$->push_back($1); };
    expr
    : or;
    or
@@ -120,13 +128,26 @@ extern int yylineno;
    power
    : postfix POW unary | postfix;
    primary
-   : id | literal | '(' expr ')' | array_lit;
+   : id { $$ = new VariableExpr(std::string($1)); free($1);}
+   | literal
+   | '(' expr ')' {$$ = $2; }
+   | array_lit;
    array_lit
-   : '[' args ']';
+   : '[' args ']' {
+   std::vector<std::unique_ptr<Expr>> arguments;
+   for(Expr* expr: *$2) {
+   arguments.push_back(std::unique_ptr<Expr>(expr));
+   }
+   delete $2;
+   $$ = new ArrayExpr(std::move(arguments));
+   };
    id
    : IDENTIFIER;
    literal
-   : NUMBER | CHAR | STRING | BOOLEAN;
+   : NUMBER { $$ = new LiteralExpr($1);}
+   | CHAR { $$ = new LiteralExpr($1);}
+   | STRING { $$ = new LiteralExpr(std::string($1)); free($1);}
+   | BOOLEAN {$$ = new LiteralExpr(static_cast<bool>($1));};
 
 %%
 void yyerror(const char *s) { fprintf(stderr, "line %d: %s\n", yylineno, s); }

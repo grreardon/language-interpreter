@@ -1,0 +1,6 @@
+{
+  //stops my std:: from being formatted wrong
+  "[bison]": {
+    "editor.formatOnSave": false
+  }
+}
