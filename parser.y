@@ -15,6 +15,7 @@
 int yylex(void);
 void yyerror(const char *s);
 extern int yylineno;
+std::unique_ptr<BlockStmt> programRoot;
 %}
 
 %define parse.error detailed
@@ -36,14 +37,20 @@ extern int yylineno;
 %type <exprs> args arg_list
 %type <str> id
 
-
-
-//program, stmt_list, assign_op, params,
-
 %%
 
    program
-   : stmt_list;
+   : stmt_list {
+        std::vector<std::unique_ptr<Stmt>> statements;
+
+        for (Stmt* stmt : *$1) {
+            statements.push_back(std::unique_ptr<Stmt>(stmt));
+        }
+
+        delete $1;
+
+        programRoot = std::make_unique<BlockStmt>(std::move(statements));
+    };
    stmt_list
    : stmt_list stmt { $1->push_back($2); $$ = $1; }
    | %empty { $$ = new std::vector<Stmt*>(); };
@@ -67,13 +74,13 @@ extern int yylineno;
    | ELSE block { $$ = $2; }
    | %empty { $$ = nullptr; };
    let
-   : LET id '=' expr { $$ = new LetStmt(std::string($2), std::unique_ptr<Expr>($4)); };
+   : LET id '=' expr { $$ = new LetStmt(std::string($2), std::unique_ptr<Expr>($4)); free($2); };
    assign
    : lvalue assign_op expr { $$ = new AssignmentStmt(std::unique_ptr<Expr>($1), $2, std::unique_ptr<Expr>($3)); };
    lvalue
-   : id { $$ = new VariableExpr(std::string($1)); }
+   : id { $$ = new VariableExpr(std::string($1)); free($1); }
    | postfix '[' expr ']' { $$ = new IndexExpr(std::unique_ptr<Expr>($1), std::unique_ptr<Expr>($3)); }
-   | postfix '.' id { $$ = new MemberExpr(std::unique_ptr<Expr>($1), std::string($3)); };
+   | postfix '.' id { $$ = new MemberExpr(std::unique_ptr<Expr>($1), std::string($3)); free($3); };
    postfix
    : postfix '[' expr ']' { $$ = new IndexExpr(std::unique_ptr<Expr>($1), std::unique_ptr<Expr>($3));}
    | postfix '(' args ')' {
@@ -101,14 +108,24 @@ extern int yylineno;
    for_cond
    : expr | %empty { $$ = nullptr; };
    for_update
-   : assign | postfix | %empty { $$ = nullptr; };
+   : assign
+   | postfix { $$ = new ExprStmt(std::unique_ptr<Expr>($1)); }
+   | %empty { $$ = nullptr; };
    func
-   : FUNC id '(' params ')' block { $$ = new FunctionStmt($2, $4, std::unique_ptr<BlockStmt>($6)); };
+   : FUNC id '(' params ')' block {
+        $$ = new FunctionStmt(
+            std::string($2),
+            std::move(*$4),
+            std::unique_ptr<BlockStmt>($6)
+        );
+        free($2);
+        delete $4;
+    };
    params
    : param_list | %empty { $$ = new std::vector<std::string>(); };
    param_list
-   : param_list ',' id { $1->push_back($3); $$ = $1; }
-   | id { $$ = new std::vector<string>(); $$->push_back($1); };
+   : param_list ',' id { $1->push_back(std::string($3)); $$ = $1; free($3); }
+   | id { $$ = new std::vector<std::string>(); $$->push_back(std::string($1)); free($1); };
    return
    : RETURN expr ';' { $$ = new ReturnStmt(std::unique_ptr<Expr>($2)); }
    | RETURN ';' { $$ = new ReturnStmt(nullptr); };
@@ -184,7 +201,7 @@ extern int yylineno;
    $$ = new ArrayExpr(std::move(arguments));
    };
    id
-   : IDENTIFIER { $$ = $1 };
+   : IDENTIFIER;
    literal
    : NUMBER { $$ = new LiteralExpr($1);}
    | CHAR { $$ = new LiteralExpr($1);}
