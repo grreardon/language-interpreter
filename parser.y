@@ -12,6 +12,7 @@
 #include <math.h>
 #include "./AST/Expr/Expr.hpp"
 #include "./AST/Stmt/Statement.hpp"
+#include "./AST/ASTPrinter/ASTPrinter.hpp"
 int yylex(void);
 void yyerror(const char *s);
 extern int yylineno;
@@ -210,6 +211,14 @@ std::unique_ptr<BlockStmt> programRoot;
 
 %%
 void yyerror(const char *s) { fprintf(stderr, "line %d: %s\n", yylineno, s); }
-int main(void) { return yyparse(); }
+int main(void) {
+    if (yyparse() != 0)
+        return 1;
+
+    ASTPrinter printer;
+    printer.print(programRoot.get());
+
+    return 0;
+}
 
 
