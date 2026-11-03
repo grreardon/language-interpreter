@@ -16,6 +16,7 @@ class MemberExpr;
 class ExprVisitor
 {
 public:
+    virtual ~ExprVisitor() = default;
     virtual Value visitLiteralExpr(const LiteralExpr *) = 0;
     virtual Value visitBinaryExpr(const BinaryExpr *) = 0;
     virtual Value visitUnaryExpr(const UnaryExpr *) = 0;
