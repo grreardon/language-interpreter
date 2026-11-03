@@ -1,6 +1,5 @@
 #pragma once
 #include "../Expr/Expr.hpp"
-#include "../Value/Value.hpp"
 class LetStmt;
 class AssignmentStmt;
 class ExprStmt;
@@ -16,23 +15,24 @@ class ContinueStmt;
 class StmtVisitor
 {
 public:
-    virtual Value visitLetStmt(const LetStmt *) = 0;
-    virtual Value visitAssignmentStmt(const AssignmentStmt *) = 0;
-    virtual Value visitExprStmt(const ExprStmt *) = 0;
-    virtual Value visitBlockStmt(const BlockStmt *) = 0;
-    virtual Value visitIfStmt(const IfStmt *) = 0;
-    virtual Value visitWhileStmt(const WhileStmt *) = 0;
-    virtual Value visitForStmt(const ForStmt *) = 0;
-    virtual Value visitFunctionStmt(const FunctionStmt *) = 0;
-    virtual Value visitReturnStmt(const ReturnStmt *) = 0;
-    virtual Value visitBreakStmt(const BreakStmt *) = 0;
-    virtual Value visitContinueStmt(const ContinueStmt *) = 0;
+    virtual ~StmtVisitor() = default;
+    virtual void visitLetStmt(const LetStmt *) = 0;
+    virtual void visitAssignmentStmt(const AssignmentStmt *) = 0;
+    virtual void visitExprStmt(const ExprStmt *) = 0;
+    virtual void visitBlockStmt(const BlockStmt *) = 0;
+    virtual void visitIfStmt(const IfStmt *) = 0;
+    virtual void visitWhileStmt(const WhileStmt *) = 0;
+    virtual void visitForStmt(const ForStmt *) = 0;
+    virtual void visitFunctionStmt(const FunctionStmt *) = 0;
+    virtual void visitReturnStmt(const ReturnStmt *) = 0;
+    virtual void visitBreakStmt(const BreakStmt *) = 0;
+    virtual void visitContinueStmt(const ContinueStmt *) = 0;
 };
 class Stmt
 {
 public:
     virtual ~Stmt() = default;
-    virtual Value accept(StmtVisitor &visitor) const = 0;
+    virtual void accept(StmtVisitor &visitor) const = 0;
 };
 
 class LetStmt : public Stmt
@@ -42,7 +42,7 @@ public:
     std::unique_ptr<Expr> value;
     LetStmt(std::string,
             std::unique_ptr<Expr>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitLetStmt(this);
     }
@@ -57,7 +57,7 @@ public:
     AssignmentStmt(std::unique_ptr<Expr>,
                    int,
                    std::unique_ptr<Expr>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitAssignmentStmt(this);
     }
@@ -68,7 +68,7 @@ class ExprStmt : public Stmt
 public:
     std::unique_ptr<Expr> expression;
     explicit ExprStmt(std::unique_ptr<Expr>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitExprStmt(this);
     }
@@ -79,7 +79,7 @@ class BlockStmt : public Stmt
 public:
     std::vector<std::unique_ptr<Stmt>> statements;
     explicit BlockStmt(std::vector<std::unique_ptr<Stmt>>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitBlockStmt(this);
     }
@@ -94,7 +94,7 @@ public:
     IfStmt(std::unique_ptr<Expr>,
            std::unique_ptr<BlockStmt>,
            std::unique_ptr<Stmt>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitIfStmt(this);
     }
@@ -107,7 +107,7 @@ public:
     std::unique_ptr<BlockStmt> body;
     WhileStmt(std::unique_ptr<Expr>,
               std::unique_ptr<BlockStmt>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitWhileStmt(this);
     }
@@ -124,7 +124,7 @@ public:
             std::unique_ptr<Expr>,
             std::unique_ptr<Stmt>,
             std::unique_ptr<BlockStmt>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitForStmt(this);
     }
@@ -139,7 +139,7 @@ public:
     FunctionStmt(std::string,
                  std::vector<std::string>,
                  std::unique_ptr<BlockStmt>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitFunctionStmt(this);
     }
@@ -148,9 +148,9 @@ public:
 class ReturnStmt : public Stmt
 {
 public:
-    std::unique_ptr<Expr> return_value;
+    std::unique_ptr<Expr> return_void;
     explicit ReturnStmt(std::unique_ptr<Expr>);
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitReturnStmt(this);
     }
@@ -159,7 +159,7 @@ public:
 class BreakStmt : public Stmt
 {
 public:
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitBreakStmt(this);
     }
@@ -167,7 +167,7 @@ public:
 class ContinueStmt : public Stmt
 {
 public:
-    Value accept(StmtVisitor &visitor) const override
+    void accept(StmtVisitor &visitor) const override
     {
         return visitor.visitContinueStmt(this);
     }
