@@ -1,4 +1,4 @@
-# interpreter
+# Interpreter (In Progress)
 
 A C-like scripting language and its interpreter, written from scratch in C++17
 with Flex and Bison.
