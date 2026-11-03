@@ -4,24 +4,32 @@
 #include <memory>
 #include <vector>
 #include <variant>
-
+#include "../Value/Value.hpp"
+class LiteralExpr;
+class BinaryExpr;
+class UnaryExpr;
+class VariableExpr;
+class CallExpr;
+class ArrayExpr;
+class IndexExpr;
+class MemberExpr;
 class ExprVisitor
 {
 public:
-    virtual void visitLiteralExpr(const LiteralExpr *) = 0;
-    virtual void visitBinaryExpr(const BinaryExpr *) = 0;
-    virtual void visitUnaryExpr(const UnaryExpr *) = 0;
-    virtual void visitVariableExpr(const VariableExpr *) = 0;
-    virtual void visitCallExpr(const CallExpr *) = 0;
-    virtual void visitArrayExpr(const ArrayExpr *) = 0;
-    virtual void visitIndexExpr(const IndexExpr *) = 0;
-    virtual void visitMemberExpr(const MemberExpr *) = 0;
+    virtual Value visitLiteralExpr(const LiteralExpr *) = 0;
+    virtual Value visitBinaryExpr(const BinaryExpr *) = 0;
+    virtual Value visitUnaryExpr(const UnaryExpr *) = 0;
+    virtual Value visitVariableExpr(const VariableExpr *) = 0;
+    virtual Value visitCallExpr(const CallExpr *) = 0;
+    virtual Value visitArrayExpr(const ArrayExpr *) = 0;
+    virtual Value visitIndexExpr(const IndexExpr *) = 0;
+    virtual Value visitMemberExpr(const MemberExpr *) = 0;
 };
 class Expr
 {
 public:
     virtual ~Expr() = default;
-    virtual void accept(ExprVisitor &visitor) const = 0;
+    virtual Value accept(ExprVisitor &visitor) const = 0;
 };
 using LiteralValue = std::variant<
     double,
@@ -34,7 +42,7 @@ class LiteralExpr : public Expr
 public:
     LiteralValue value;
     explicit LiteralExpr(LiteralValue);
-    void accept(ExprVisitor &visitor) const override
+    Value accept(ExprVisitor &visitor) const override
     {
         return visitor.visitLiteralExpr(this);
     }
@@ -51,7 +59,7 @@ public:
         int,
         std::unique_ptr<Expr>);
 
-    void accept(ExprVisitor &visitor) const override
+    Value accept(ExprVisitor &visitor) const override
     {
         return visitor.visitBinaryExpr(this);
     }
@@ -65,7 +73,7 @@ public:
     UnaryExpr(
         std::unique_ptr<Expr>,
         int);
-    void accept(ExprVisitor &visitor) const override
+    Value accept(ExprVisitor &visitor) const override
     {
         return visitor.visitUnaryExpr(this);
     }
@@ -76,7 +84,7 @@ class VariableExpr : public Expr
 public:
     std::string name;
     explicit VariableExpr(std::string);
-    void accept(ExprVisitor &visitor) const override
+    Value accept(ExprVisitor &visitor) const override
     {
         return visitor.visitVariableExpr(this);
     }
@@ -90,7 +98,7 @@ public:
     CallExpr(
         std::unique_ptr<Expr>,
         std::vector<std::unique_ptr<Expr>>);
-    void accept(ExprVisitor &visitor) const override
+    Value accept(ExprVisitor &visitor) const override
     {
         return visitor.visitCallExpr(this);
     }
@@ -101,7 +109,7 @@ class ArrayExpr : public Expr
 public:
     std::vector<std::unique_ptr<Expr>> elements;
     explicit ArrayExpr(std::vector<std::unique_ptr<Expr>>);
-    void accept(ExprVisitor &visitor) const override
+    Value accept(ExprVisitor &visitor) const override
     {
         return visitor.visitArrayExpr(this);
     }
@@ -115,7 +123,7 @@ public:
     IndexExpr(
         std::unique_ptr<Expr>,
         std::unique_ptr<Expr>);
-    void accept(ExprVisitor &visitor) const override
+    Value accept(ExprVisitor &visitor) const override
     {
         return visitor.visitIndexExpr(this);
     }
@@ -129,7 +137,7 @@ public:
     MemberExpr(
         std::unique_ptr<Expr>,
         std::string);
-    void accept(ExprVisitor &visitor) const override
+    Value accept(ExprVisitor &visitor) const override
     {
         return visitor.visitMemberExpr(this);
     }
