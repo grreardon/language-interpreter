@@ -148,7 +148,7 @@ public:
 class ReturnStmt : public Stmt
 {
 public:
-    std::unique_ptr<Expr> return_void;
+    std::unique_ptr<Expr> return_value;
     explicit ReturnStmt(std::unique_ptr<Expr>);
     void accept(StmtVisitor &visitor) const override
     {
