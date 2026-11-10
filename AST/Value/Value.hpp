@@ -16,3 +16,4 @@ Value bit_xor(const Value &left, const Value &right);
 Value bit_and(const Value &left, const Value &right);
 Value shift(const Value &left, const Value &right, char op);
 Value power(const Value &left, const Value &right);
+Value modulo(const Value &left, const Value &right);
